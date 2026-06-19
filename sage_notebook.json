@@ -13,7 +13,7 @@
   },
   {
     "type": "code",
-    "content": "contour_plot(z,(x,-2,2),(y,-2,2),labels=0,fill=0,figsize=2,ticks=[[],[]])"
+    "content": "contour_plot(z,(x,-2,2),(y,-2,2),labels=0,fill=0,figsize=3,ticks=[[],[]])"
   },
   {
     "type": "markdown",
