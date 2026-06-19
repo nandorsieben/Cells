@@ -1,10 +1,18 @@
 [
   {
     "type": "markdown",
+    "content": "Plot of $z=x^2+y^2$."
+  },
+  {
+    "type": "code",
+    "content": "var('x y')\nz=x^2+y^2\nplot3d(z,(x,-2,2),(y,-2,2),color='yellow',aspect_ratio=[3,3,1])"
+  },
+  {
+    "type": "markdown",
     "content": "The contourplot of $(x,y)\\mapsto x^2+y^2$."
   },
   {
     "type": "code",
-    "content": "var('x y')\ncontour_plot(x^2+y^2,(x,-2,2),(y,-2,2),labels=0,fill=0,figsize=3.3,ticks=[[],[]])"
+    "content": "contour_plot(z,(x,-2,2),(y,-2,2),labels=0,fill=0,figsize=2,ticks=[[],[]])"
   }
 ]
