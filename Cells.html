@@ -71,16 +71,22 @@
                 margin-bottom: .75rem;
             }
 
-            .cell-toolbar {
-                margin-bottom: .15rem;
-            }
-
             .cell-toolbar button {
                 margin-right: .2rem;
                 padding: .03rem .2rem;
                 cursor: pointer;
                 font-size: .68rem;
                 line-height: 1.05;
+            }
+
+            .cell-toolbar {
+                margin-bottom: .15rem;
+                display: flex;           /* make toolbar a flex container */
+                align-items: center;
+            }
+
+            .cell-toolbar button[data-action="delete-cell"] {
+                margin-left: auto;       /* push Delete button to the far right */
             }
 
             .compute {
