@@ -153,10 +153,12 @@
 
             .sagecell_evalButton {
                 font-size: .85rem !important;
-                padding: .2rem .5rem !important;
+                padding: .1rem .2rem !important;
             }
 
-            .sagecell .CodeMirror-fullscreen-button,
+            .sagecell .CodeMirror-fullscreen-button {
+                display: none !important;
+             }
             .sagecell .sagecell_fullScreen,
             .sagecell .sagecell_fullscreen,
             .sagecell button[title*="Full"],
@@ -167,14 +169,16 @@
             }
 
             .bottom-toolbar {
-                margin-top: .15rem;
+                margin-top: .1rem;
                 margin-bottom: 0;
             }
 
             .bottom-toolbar button {
-                font-size: .72rem;
-                padding: .06rem .2rem;
-                margin-bottom: 0;
+                margin-right: .2rem;
+                padding: .03rem .2rem;
+                cursor: pointer;
+                font-size: .68rem;
+                line-height: 1.05;
             }
 
             @page {
