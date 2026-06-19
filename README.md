@@ -1,6 +1,6 @@
 # Cells
 
-A very simple Sagemath notebook for Sagemath and Markdown cells: 
+A very simple notebook for Sagemath and Markdown cells: 
 [Cells.html](https://nandorsieben.github.io/Cells/Cells.html)
 
 Features:
