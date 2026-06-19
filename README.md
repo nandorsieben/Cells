@@ -7,4 +7,4 @@ Features:
 - add and delete cells
 - run all cells
 - create pdf
-- save/load locally
+- save/load notebokk locally as a json file
