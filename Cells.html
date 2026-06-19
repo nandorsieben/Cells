@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Sage_Cells</title>
+        <script src="https://sagecell.sagemath.org/static/embedded_sagecell.js"></script>
+        <script>
+            window.MathJax = {
+                tex: {
+                    inlineMath: [["$", "$"], ["\\(", "\\)"]],
+                    displayMath: [["$$", "$$"], ["\\[", "\\]"]],
+                    processEscapes: true
+                },
+                chtml: {
+                    scale: 0.95,
+                    matchFontHeight: false
+                },
+                startup: {
+                    typeset: false
+                }
+            };
+        </script>
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" defer></script>
+        <style>
+            .sagecell .CodeMirror-scroll {
+                min-height: 1.3em;
+                max-height: none;
+                height: auto;
+            }
+        </style>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 20px;
+            }
+
+            .toolbar {
+                margin-bottom: 1rem;
+            }
+
+            .toolbar button,
+            .toolbar label {
+                margin-right: .4rem;
+                margin-bottom: .4rem;
+                padding: .2rem .3rem;
+                cursor: pointer;
+                font-size: .85rem;
+            }
+
+            .toolbar label {
+                display: inline-block;
+                border: 1px solid #888;
+                border-radius: 3px;
+                background: #eee;
+            }
+
+            #load-file {
+                display: none;
+            }
+
+            #status {
+                display: inline-block;
+                margin-left: .5rem;
+                color: #555;
+                font-size: .85rem;
+                vertical-align: middle;
+            }
+
+            .cell-wrapper {
+                margin-bottom: .75rem;
+            }
+
+            .cell-toolbar {
+                margin-bottom: .15rem;
+            }
+
+            .cell-toolbar button {
+                margin-right: .2rem;
+                padding: .03rem .2rem;
+                cursor: pointer;
+                font-size: .68rem;
+                line-height: 1.05;
+            }
+
+            .compute {
+                margin-bottom: .75rem;
+            }
+
+            .markdown-cell {
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                padding: .18rem .18rem;
+                background: #fafafa;
+            }
+
+            .markdown-editor {
+                box-sizing: border-box;
+                width: 100%;
+                min-height: 1rem;
+                font-family: monospace;
+                font-size: .95rem;
+            }
+
+            .markdown-preview {
+                min-height: .5rem;
+            }
+
+            .markdown-preview > * {
+                margin-top: .05rem;
+                margin-bottom: .05rem;
+            }
+
+            .markdown-preview h1,
+            .markdown-preview h2,
+            .markdown-preview h3 {
+                margin-top: .08rem;
+                margin-bottom: .08rem;
+                line-height: 1.15;
+            }
+
+            .markdown-preview p {
+                margin-top: .04rem;
+                margin-bottom: .04rem;
+                line-height: 1.22;
+            }
+
+            .markdown-preview ul {
+                margin-top: .04rem;
+                margin-bottom: .04rem;
+                padding-left: 1.1rem;
+            }
+
+            .markdown-preview li {
+                margin-top: .02rem;
+                margin-bottom: .02rem;
+                line-height: 1.2;
+            }
+
+            .markdown-preview code {
+                background: #eee;
+                padding: .02rem .15rem;
+            }
+
+            .markdown-preview pre {
+                background: #eee;
+                padding: .22rem;
+                overflow-x: auto;
+                margin-top: .08rem;
+                margin-bottom: .08rem;
+                line-height: 1;
+            }
+
+            .sagecell_evalButton {
+                font-size: .85rem !important;
+                padding: .2rem .5rem !important;
+            }
+
+            .sagecell .CodeMirror-fullscreen-button,
+            .sagecell .sagecell_fullScreen,
+            .sagecell .sagecell_fullscreen,
+            .sagecell button[title*="Full"],
+            .sagecell button[title*="full"],
+            .sagecell a[title*="Full"],
+            .sagecell a[title*="full"] {
+                display: none !important;
+            }
+
+            .bottom-toolbar {
+                margin-top: .15rem;
+                margin-bottom: 0;
+            }
+
+            .bottom-toolbar button {
+                font-size: .72rem;
+                padding: .06rem .2rem;
+                margin-bottom: 0;
+            }
+
+            @page {
+                size: auto;
+                margin: 0;
+            }
+
+            @media print {
+                html,
+                body {
+                    margin: 0 !important;
+                    padding: 0 !important;
+                }
+
+                body {
+                    padding: .35in !important;
+                    font-size: 10pt !important;
+                    line-height: 1.18 !important;
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
+                }
+
+                .toolbar,
+                .cell-toolbar,
+                #status {
+                    display: none !important;
+                }
+
+                .cell-wrapper {
+                    margin-bottom: .45rem;
+                    break-inside: avoid;
+                    page-break-inside: avoid;
+                }
+
+                .markdown-cell {
+                    border: none;
+                    background: white;
+                    padding: 0;
+                }
+
+                .markdown-editor {
+                    display: none !important;
+                }
+
+                .markdown-preview {
+                    display: block !important;
+                    font-size: 10pt !important;
+                    line-height: 1.18 !important;
+                }
+
+                .markdown-preview h1 {
+                    font-size: 16pt !important;
+                }
+
+                .markdown-preview h2 {
+                    font-size: 14pt !important;
+                }
+
+                .markdown-preview h3 {
+                    font-size: 12pt !important;
+                }
+
+                .markdown-preview p {
+                    line-height: 1.18 !important;
+                }
+
+                .markdown-preview pre,
+                .markdown-preview code {
+                    font-size: 9pt !important;
+                    line-height: 1.15 !important;
+                }
+
+                mjx-container {
+                    break-inside: avoid;
+                    page-break-inside: avoid;
+                    overflow: visible !important;
+                    max-width: 100% !important;
+                }
+
+                mjx-container[jax="CHTML"][display="true"] {
+                    display: block !important;
+                    text-align: center !important;
+                    margin: .35em 0 !important;
+                }
+
+                mjx-container[jax="CHTML"] {
+                    font-size: 100% !important;
+                    line-height: normal !important;
+                }
+
+                .compute {
+                    margin-bottom: .45rem;
+                    break-inside: avoid;
+                    page-break-inside: avoid;
+                    font-size: 10pt !important;
+                    line-height: 1.18 !important;
+                }
+
+                .sagecell_stdout,
+                .sagecell_stderr,
+                .sagecell_output,
+                .sagecell .CodeMirror {
+                    font-size: 9pt !important;
+                    line-height: 1 !important;
+                }
+
+                .sagecell_evalButton {
+                    display: none !important;
+                }
+
+                textarea {
+                    border: none;
+                }
+            }
+        </style>
+        <script>
+            "use strict";
+
+            let rebuildNumber = 0;
+            let cleanupObserver = null;
+
+            function setStatus(message) {
+                const status = document.getElementById("status");
+                if (status) {
+                    status.textContent = message;
+                }
+            }
+
+            function getCodeFromCell(cell) {
+                const codeMirror = cell.querySelector(".CodeMirror");
+                if (codeMirror && codeMirror.CodeMirror) {
+                    return codeMirror.CodeMirror.getValue();
+                }
+
+                const textarea = cell.querySelector("textarea");
+                if (textarea) {
+                    return textarea.value;
+                }
+
+                const script = cell.querySelector('script[type="text/x-sage"]');
+                return script ? script.textContent : "";
+            }
+
+            function getAllCellsData() {
+                const wrappers = [...document.querySelectorAll("#cells > .cell-wrapper")];
+                return wrappers.map(wrapper => {
+                    if (wrapper.dataset.type === "markdown") {
+                        const textarea = wrapper.querySelector(".markdown-editor");
+                        return {
+                            type: "markdown",
+                            content: textarea ? textarea.value : ""
+                        };
+                    }
+
+                    const compute = wrapper.querySelector(".compute");
+                    return {
+                        type: "code",
+                        content: compute ? getCodeFromCell(compute) : ""
+                    };
+                });
+            }
+
+            function getCellIndexFromEvent(event) {
+                const button = event.target.closest("button[data-action]");
+                if (!button) {
+                    return -1;
+                }
+
+                const wrapper = button.closest(".cell-wrapper");
+                return (!wrapper || !wrapper.parentNode) ? -1 : [...wrapper.parentNode.children].indexOf(wrapper);
+            }
+
+            function escapeHtml(text) {
+                return text
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+
+            function renderInlineMarkdown(text) {
+                return text
+                    .replace(/`([^`]+)`/g, "<code>$1</code>")
+                    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+                    .replace(/\*([^*]+)\*/g, "<em>$1</em>");
+            }
+
+            function markdownToHtml(markdown) {
+                const lines = escapeHtml(markdown).split(/\r?\n/);
+                let html = "";
+                let list = false;
+                let code = false;
+
+                for (const line of lines) {
+                    if (line.trim().startsWith("```")) {
+                        html += code ? "</code></pre>" : "<pre><code>";
+                        code = !code;
+                        continue;
+                    }
+
+                    if (code) {
+                        html += line + "\n";
+                        continue;
+                    }
+
+                    if (/^###\s+/.test(line)) {
+                        if (list) {
+                            html += "</ul>";
+                            list = false;
+                        }
+                        html += "<h3>" + renderInlineMarkdown(line.replace(/^###\s+/, "")) + "</h3>";
+                        continue;
+                    }
+
+                    if (/^##\s+/.test(line)) {
+                        if (list) {
+                            html += "</ul>";
+                            list = false;
+                        }
+                        html += "<h2>" + renderInlineMarkdown(line.replace(/^##\s+/, "")) + "</h2>";
+                        continue;
+                    }
+
+                    if (/^#\s+/.test(line)) {
+                        if (list) {
+                            html += "</ul>";
+                            list = false;
+                        }
+                        html += "<h1>" + renderInlineMarkdown(line.replace(/^#\s+/, "")) + "</h1>";
+                        continue;
+                    }
+
+                    if (/^[-*]\s+/.test(line)) {
+                        if (!list) {
+                            html += "<ul>";
+                            list = true;
+                        }
+                        html += "<li>" + renderInlineMarkdown(line.replace(/^[-*]\s+/, "")) + "</li>";
+                        continue;
+                    }
+
+                    if (line.trim() === "") {
+                        if (list) {
+                            html += "</ul>";
+                            list = false;
+                        }
+                        continue;
+                    }
+
+                    if (list) {
+                        html += "</ul>";
+                        list = false;
+                    }
+
+                    html += "<p>" + renderInlineMarkdown(line) + "</p>";
+                }
+
+                if (code) {
+                    html += "</code></pre>";
+                }
+
+                if (list) {
+                    html += "</ul>";
+                }
+
+                return html;
+            }
+
+            function typesetMath(element) {
+                if (window.MathJax && MathJax.typesetPromise) {
+                    if (MathJax.typesetClear) {
+                        MathJax.typesetClear([element]);
+                    }
+                    MathJax.typesetPromise([element]).catch(() => {});
+                }
+            }
+
+            function makeCellToolbar(type) {
+                const toolbar = document.createElement("div");
+                toolbar.className = "cell-toolbar";
+
+                [
+                    ["insert-code-above", "+Sage"],
+                    ["insert-markdown-above", "+Md"]
+                ].forEach(([action, text]) => {
+                    const button = document.createElement("button");
+                    button.type = "button";
+                    button.dataset.action = action;
+                    button.textContent = text;
+                    toolbar.appendChild(button);
+                });
+
+                if (type === "markdown") {
+                    const preview = document.createElement("button");
+                    preview.type = "button";
+                    preview.dataset.action = "toggle-markdown-preview";
+                    preview.textContent = "Preview";
+                    toolbar.appendChild(preview);
+                }
+
+                const del = document.createElement("button");
+                del.type = "button";
+                del.dataset.action = "delete-cell";
+                del.textContent = "Delete";
+                toolbar.appendChild(del);
+
+                return toolbar;
+            }
+
+            function makeCodeCell(content, group) {
+                const wrapper = document.createElement("div");
+                wrapper.className = "cell-wrapper";
+                wrapper.dataset.type = "code";
+                wrapper.appendChild(makeCellToolbar("code"));
+
+                const compute = document.createElement("div");
+                compute.className = "compute " + group;
+
+                const script = document.createElement("script");
+                script.type = "text/x-sage";
+                script.textContent = content || "";
+                compute.appendChild(script);
+
+                wrapper.appendChild(compute);
+                return wrapper;
+            }
+
+            function makeMarkdownCell(content) {
+                const wrapper = document.createElement("div");
+                wrapper.className = "cell-wrapper";
+                wrapper.dataset.type = "markdown";
+                wrapper.dataset.preview = "false";
+                wrapper.appendChild(makeCellToolbar("markdown"));
+
+                const box = document.createElement("div");
+                box.className = "markdown-cell";
+
+                const textarea = document.createElement("textarea");
+                textarea.className = "markdown-editor";
+                textarea.value = content || "";
+
+                const preview = document.createElement("div");
+                preview.className = "markdown-preview";
+                preview.style.display = "none";
+
+                box.appendChild(textarea);
+                box.appendChild(preview);
+                wrapper.appendChild(box);
+                return wrapper;
+            }
+
+            function normalizeCells(cells) {
+                if (!Array.isArray(cells) || !cells.length) {
+                    return [{ type: "code", content: "" }];
+                }
+
+                return cells.map(cell => {
+                    if (typeof cell === "string") {
+                        return { type: "code", content: cell };
+                    }
+
+                    if (cell && cell.type === "markdown") {
+                        return { type: "markdown", content: String(cell.content || "") };
+                    }
+
+                    if (cell && cell.type === "code") {
+                        return { type: "code", content: String(cell.content || "") };
+                    }
+
+                    return { type: "code", content: "" };
+                });
+            }
+
+            function hideSageCellFooters() {
+                document.querySelectorAll("#cells .compute a, #cells .compute span, #cells .compute div, #cells .compute p").forEach(element => {
+                    if (element.querySelector(".CodeMirror") || element.querySelector("textarea") || element.querySelector("button")) {
+                        return;
+                    }
+
+                    const text = (element.textContent || "").replace(/\s+/g, " ").trim();
+                    if (text === "Help | Powered by SageMath" || text === "Help Powered by SageMath") {
+                        element.style.display = "none";
+                    }
+                });
+            }
+
+            function hideFullscreenButtons() {
+                const selectors = [
+                    ".CodeMirror-fullscreen-button",
+                    ".sagecell_fullScreen",
+                    ".sagecell_fullscreen",
+                    'button[title*="Full"]',
+                    'button[title*="full"]',
+                    'a[title*="Full"]',
+                    'a[title*="full"]'
+                ];
+
+                document.querySelectorAll("#cells .compute " + selectors.join(", #cells .compute ")).forEach(element => {
+                    element.style.display = "none";
+                });
+
+                document.querySelectorAll("#cells .compute button, #cells .compute a").forEach(element => {
+                    const text = (element.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+                    const title = (element.getAttribute("title") || "").toLowerCase();
+                    const aria = (element.getAttribute("aria-label") || "").toLowerCase();
+
+                    if (text === "fullscreen" || title.includes("fullscreen") || aria.includes("fullscreen")) {
+                        element.style.display = "none";
+                    }
+                });
+            }
+
+            function startCleanupObserver() {
+                if (cleanupObserver) {
+                    cleanupObserver.disconnect();
+                }
+
+                const target = document.getElementById("cells");
+                if (!target || !window.MutationObserver) {
+                    return;
+                }
+
+                cleanupObserver = new MutationObserver(() => {
+                    hideSageCellFooters();
+                    hideFullscreenButtons();
+                });
+                cleanupObserver.observe(target, { childList: true, subtree: true });
+            }
+
+            function rebuildCells(data, message) {
+                const holder = document.getElementById("cells");
+                if (!holder) {
+                    return;
+                }
+
+                const cells = normalizeCells(data);
+                const group = "sage-linked-group-" + (++rebuildNumber);
+                holder.innerHTML = "";
+
+                cells.forEach(cell => {
+                    holder.appendChild(cell.type === "markdown" ? makeMarkdownCell(cell.content) : makeCodeCell(cell.content, group));
+                });
+
+                if (cells.some(cell => cell.type === "code")) {
+                    if (!window.sagecell || typeof sagecell.makeSagecell !== "function") {
+                        setStatus("SageCell did not load. Check your internet connection or browser console.");
+                        return;
+                    }
+
+                    sagecell.makeSagecell({
+                        inputLocation: "." + group,
+                        linked: true,
+                        evalButtonText: "Run",
+                        autoeval: false
+                    });
+
+                    startCleanupObserver();
+                    setTimeout(() => {
+                        hideSageCellFooters();
+                        hideFullscreenButtons();
+                    }, 500);
+                    setTimeout(() => {
+                        hideSageCellFooters();
+                        hideFullscreenButtons();
+                    }, 1500);
+                }
+
+                setStatus(message || "Ready.");
+            }
+
+            async function previewAllMarkdownCells() {
+                const previews = [];
+
+                document.querySelectorAll('#cells > .cell-wrapper[data-type="markdown"]').forEach(wrapper => {
+                    const textarea = wrapper.querySelector(".markdown-editor");
+                    const preview = wrapper.querySelector(".markdown-preview");
+                    const button = wrapper.querySelector('button[data-action="toggle-markdown-preview"]');
+
+                    if (!textarea || !preview) {
+                        return;
+                    }
+
+                    preview.innerHTML = markdownToHtml(textarea.value);
+                    textarea.style.display = "none";
+                    preview.style.display = "block";
+                    wrapper.dataset.preview = "true";
+
+                    if (button) {
+                        button.textContent = "Edit";
+                    }
+
+                    previews.push(preview);
+                });
+
+                if (window.MathJax && MathJax.typesetPromise && previews.length) {
+                    if (MathJax.typesetClear) {
+                        MathJax.typesetClear(previews);
+                    }
+                    await MathJax.typesetPromise(previews).catch(() => {});
+                }
+
+                return previews;
+            }
+
+            async function runAllCells() {
+                await previewAllMarkdownCells();
+
+                if (window.jQuery) {
+                    window.jQuery("#cells .sagecell_evalButton").click();
+                } else {
+                    document.querySelectorAll("#cells .sagecell_evalButton").forEach(button => button.click());
+                }
+
+                setStatus("Running all code cells and previewing Markdown cells...");
+                setTimeout(() => {
+                    hideSageCellFooters();
+                    hideFullscreenButtons();
+                }, 1000);
+            }
+
+            function addCell() {
+                const cells = getAllCellsData();
+                cells.push({ type: "code", content: "" });
+                rebuildCells(cells, "Added a Sage cell. The Sage session was reset; run cells from top to bottom.");
+            }
+
+            function addMarkdownCell() {
+                const cells = getAllCellsData();
+                cells.push({ type: "markdown", content: "" });
+                rebuildCells(cells, "Added an empty Markdown cell. The Sage session was reset; run code cells from top to bottom.");
+            }
+
+            function insertCellAbove(event, type) {
+                const index = getCellIndexFromEvent(event);
+                if (index < 0) {
+                    return;
+                }
+
+                const cells = getAllCellsData();
+                cells.splice(index, 0, { type: type, content: "" });
+                rebuildCells(cells, "Inserted a " + (type === "code" ? "Sage" : "Markdown") + " cell above. The Sage session was reset; run cells from top to bottom.");
+            }
+
+            function deleteCell(event) {
+                const index = getCellIndexFromEvent(event);
+                if (index < 0) {
+                    return;
+                }
+
+                const cells = getAllCellsData();
+                if (cells.length > 1) {
+                    cells.splice(index, 1);
+                } else {
+                    cells[0] = { type: "code", content: "" };
+                }
+
+                rebuildCells(cells, "Deleted a cell. The Sage session was reset. Run cells from top to bottom.");
+            }
+
+            function toggleMarkdownPreview(event) {
+                const wrapper = event.target.closest(".cell-wrapper");
+                if (!wrapper) {
+                    return;
+                }
+
+                const textarea = wrapper.querySelector(".markdown-editor");
+                const preview = wrapper.querySelector(".markdown-preview");
+                const button = event.target.closest("button");
+
+                if (wrapper.dataset.preview === "true") {
+                    textarea.style.display = "block";
+                    preview.style.display = "none";
+                    wrapper.dataset.preview = "false";
+                    button.textContent = "Preview";
+                } else {
+                    preview.innerHTML = markdownToHtml(textarea.value);
+                    textarea.style.display = "none";
+                    preview.style.display = "block";
+                    wrapper.dataset.preview = "true";
+                    button.textContent = "Edit";
+                    typesetMath(preview);
+                }
+            }
+
+            async function createPdf() {
+                setStatus("Typesetting Markdown math for PDF...");
+                await previewAllMarkdownCells();
+                hideSageCellFooters();
+                hideFullscreenButtons();
+
+                if (document.fonts && document.fonts.ready) {
+                    await document.fonts.ready.catch(() => {});
+                }
+
+                await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+                setStatus("Preparing print.");
+                setTimeout(() => window.print(), 250);
+            }
+
+            async function saveCells() {
+                const json = JSON.stringify(getAllCellsData(), null, 2);
+
+                if (window.showSaveFilePicker) {
+                    try {
+                        const handle = await window.showSaveFilePicker({
+                            suggestedName: "sage_notebook.json",
+                            types: [{
+                                description: "JSON notebook",
+                                accept: { "application/json": [".json"] }
+                            }]
+                        });
+                        const writable = await handle.createWritable();
+                        await writable.write(json);
+                        await writable.close();
+                        setStatus("Saved sage_notebook.json.");
+                        return;
+                    } catch (error) {
+                        setStatus("Save cancelled.");
+                        return;
+                    }
+                }
+
+                const blob = new Blob([json], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = "sage_notebook.json";
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(url);
+                setStatus("Downloaded sage_notebook.json.");
+            }
+
+            function loadCellsFromFile(event) {
+                const file = event.target.files[0];
+                event.target.value = "";
+
+                if (!file) {
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = loadEvent => {
+                    try {
+                        rebuildCells(normalizeCells(JSON.parse(loadEvent.target.result)), "Loaded notebook. The Sage session was reset. Run cells from top to bottom.");
+                    } catch (error) {
+                        setStatus("Load failed: " + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            window.addEventListener("load", () => {
+                document.getElementById("add-cell").addEventListener("click", addCell);
+                document.getElementById("add-markdown-cell").addEventListener("click", addMarkdownCell);
+                document.getElementById("run-all").addEventListener("click", runAllCells);
+                document.getElementById("create-pdf").addEventListener("click", createPdf);
+                document.getElementById("save-cells").addEventListener("click", saveCells);
+                document.getElementById("load-file").addEventListener("change", loadCellsFromFile);
+
+                document.getElementById("cells").addEventListener("click", event => {
+                    const button = event.target.closest("button[data-action]");
+                    if (!button) {
+                        return;
+                    }
+
+                    if (button.dataset.action === "insert-code-above") {
+                        insertCellAbove(event, "code");
+                    }
+                    if (button.dataset.action === "insert-markdown-above") {
+                        insertCellAbove(event, "markdown");
+                    }
+                    if (button.dataset.action === "delete-cell") {
+                        deleteCell(event);
+                    }
+                    if (button.dataset.action === "toggle-markdown-preview") {
+                        toggleMarkdownPreview(event);
+                    }
+                });
+
+                rebuildCells(getAllCellsData(), "Ready.");
+            });
+        </script>
+    </head>
+    <body>
+        <div class="toolbar">
+            <button type="button" id="run-all">Run All</button>
+            <button type="button" id="create-pdf">Create PDF</button>
+            <button type="button" id="save-cells">Save</button>
+            <label for="load-file">Load</label>
+            <input id="load-file" type="file" accept="application/json,.json">
+            <span id="status">Loading SageCell...</span>
+        </div>
+
+        <div id="cells">
+            <div class="cell-wrapper" data-type="code">
+                <div class="compute">
+                    <script type="text/x-sage"></script>
+                </div>
+            </div>
+            <div class="cell-wrapper" data-type="markdown" data-preview="false">
+                <div class="markdown-cell">
+                    <textarea class="markdown-editor"></textarea>
+                    <div class="markdown-preview" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="toolbar bottom-toolbar">
+            <button type="button" id="add-cell">+Sage</button>
+            <button type="button" id="add-markdown-cell">+Md</button>
+        </div>
+    </body>
+</html>

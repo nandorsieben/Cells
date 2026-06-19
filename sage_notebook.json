@@ -1,0 +1,10 @@
+[
+  {
+    "type": "markdown",
+    "content": "The contourplot of $(x,y)\\mapsto x^2+y^2$."
+  },
+  {
+    "type": "code",
+    "content": "var('x y')\ncontour_plot(x^2+y^2,(x,-2,2),(y,-2,2),labels=0,fill=0,figsize=3.3,ticks=[[],[]])"
+  }
+]
