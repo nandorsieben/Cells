@@ -8,8 +8,8 @@
         <script>
             window.MathJax = {
                 tex: {
-                    inlineMath: [["$", "$"], ["\\(", "\\)"]],
-                    displayMath: [["$$", "$$"], ["\\[", "\\]"]],
+                    inlineMath: [["$", "$"], ["\(", "\)"]],
+                    displayMath: [["$$", "$$"], ["\[", "\]"]],
                     processEscapes: true
                 },
                 chtml: {
@@ -81,12 +81,12 @@
 
             .cell-toolbar {
                 margin-bottom: .15rem;
-                display: flex;           /* make toolbar a flex container */
+                display: flex;
                 align-items: center;
             }
 
             .cell-toolbar button[data-action="delete-cell"] {
-                margin-left: auto;       /* push Delete button to the far right */
+                margin-left: auto;
             }
 
             .compute {
@@ -305,6 +305,7 @@
 
             let rebuildNumber = 0;
             let cleanupObserver = null;
+            const LINK_KEY = "notebook-session";
 
             function setStatus(message) {
                 const status = document.getElementById("status");
@@ -638,6 +639,7 @@
                     sagecell.makeSagecell({
                         inputLocation: "." + group,
                         linked: true,
+                        linkKey: LINK_KEY,
                         evalButtonText: "Run",
                         autoeval: false
                     });
@@ -655,6 +657,93 @@
 
                 setStatus(message || "Ready.");
             }
+
+            /* ---------- incremental helpers (no session reset) ---------- */
+
+            function initSingleCodeCell(compute) {
+                if (!window.sagecell || typeof sagecell.makeSagecell !== "function") {
+                    setStatus("SageCell did not load.");
+                    return;
+                }
+                const uniqueClass = "sage-cell-" + (++rebuildNumber);
+                compute.classList.add(uniqueClass);
+                sagecell.makeSagecell({
+                    inputLocation: "." + uniqueClass,
+                    linked: true,
+                    linkKey: LINK_KEY,
+                    evalButtonText: "Run",
+                    autoeval: false
+                });
+                startCleanupObserver();
+                setTimeout(() => {
+                    hideSageCellFooters();
+                    hideFullscreenButtons();
+                }, 500);
+                setTimeout(() => {
+                    hideSageCellFooters();
+                    hideFullscreenButtons();
+                }, 1500);
+            }
+
+            function addCell() {
+                const holder = document.getElementById("cells");
+                const cell = makeCodeCell("", "");
+                holder.appendChild(cell);
+                initSingleCodeCell(cell.querySelector(".compute"));
+                setStatus("Added a Sage cell.");
+            }
+
+            function addMarkdownCell() {
+                const holder = document.getElementById("cells");
+                const cell = makeMarkdownCell("");
+                holder.appendChild(cell);
+                setStatus("Added a Markdown cell.");
+            }
+
+            function insertCellAbove(event, type) {
+                const index = getCellIndexFromEvent(event);
+                if (index < 0) {
+                    return;
+                }
+
+                const holder = document.getElementById("cells");
+                const wrappers = [...holder.children];
+                const refWrapper = wrappers[index];
+
+                const newWrapper = type === "code"
+                    ? makeCodeCell("", "")
+                    : makeMarkdownCell("");
+
+                holder.insertBefore(newWrapper, refWrapper);
+
+                if (type === "code") {
+                    initSingleCodeCell(newWrapper.querySelector(".compute"));
+                }
+
+                setStatus("Inserted a " + (type === "code" ? "Sage" : "Markdown") + " cell above.");
+            }
+
+            function deleteCell(event) {
+                const index = getCellIndexFromEvent(event);
+                if (index < 0) {
+                    return;
+                }
+
+                const holder = document.getElementById("cells");
+                const wrappers = [...holder.children];
+
+                if (wrappers.length > 1) {
+                    wrappers[index].remove();
+                    setStatus("Deleted a cell.");
+                } else {
+                    const newWrapper = makeCodeCell("", "");
+                    holder.replaceChild(newWrapper, wrappers[0]);
+                    initSingleCodeCell(newWrapper.querySelector(".compute"));
+                    setStatus("Cleared the last cell.");
+                }
+            }
+
+            /* ---------- end incremental helpers ---------- */
 
             async function previewAllMarkdownCells() {
                 const previews = [];
@@ -704,45 +793,6 @@
                     hideSageCellFooters();
                     hideFullscreenButtons();
                 }, 1000);
-            }
-
-            function addCell() {
-                const cells = getAllCellsData();
-                cells.push({ type: "code", content: "" });
-                rebuildCells(cells, "Added a Sage cell. The Sage session was reset; run cells from top to bottom.");
-            }
-
-            function addMarkdownCell() {
-                const cells = getAllCellsData();
-                cells.push({ type: "markdown", content: "" });
-                rebuildCells(cells, "Added an empty Markdown cell. The Sage session was reset; run code cells from top to bottom.");
-            }
-
-            function insertCellAbove(event, type) {
-                const index = getCellIndexFromEvent(event);
-                if (index < 0) {
-                    return;
-                }
-
-                const cells = getAllCellsData();
-                cells.splice(index, 0, { type: type, content: "" });
-                rebuildCells(cells, "Inserted a " + (type === "code" ? "Sage" : "Markdown") + " cell above. The Sage session was reset; run cells from top to bottom.");
-            }
-
-            function deleteCell(event) {
-                const index = getCellIndexFromEvent(event);
-                if (index < 0) {
-                    return;
-                }
-
-                const cells = getAllCellsData();
-                if (cells.length > 1) {
-                    cells.splice(index, 1);
-                } else {
-                    cells[0] = { type: "code", content: "" };
-                }
-
-                rebuildCells(cells, "Deleted a cell. The Sage session was reset. Run cells from top to bottom.");
             }
 
             function toggleMarkdownPreview(event) {
@@ -870,7 +920,8 @@
                 rebuildCells(getAllCellsData(), "Ready.");
             });
         </script>
-    </head>
+    <base target="_blank">
+</head>
     <body>
         <div class="toolbar">
             <button type="button" id="run-all">Run All</button>
