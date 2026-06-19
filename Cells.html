@@ -163,6 +163,9 @@
                 font-size: .85rem !important;
                 padding: .1rem .2rem !important;
             }
+            #cells .compute .sagecell_evalButton {
+                display: none !important;
+            }
 
             .sagecell .CodeMirror-fullscreen-button {
                 display: none !important;
@@ -481,6 +484,13 @@
                     toolbar.appendChild(button);
                 });
 
+                if (type === "code") {
+                    const run = document.createElement("button");
+                    run.type = "button";
+                    run.dataset.action = "run-cell";
+                    run.textContent = "Run";
+                    toolbar.appendChild(run);
+                }
                 if (type === "markdown") {
                     const preview = document.createElement("button");
                     preview.type = "button";
@@ -797,6 +807,23 @@
                 }, 1000);
             }
 
+            function runCell(event) {
+                const wrapper = event.target.closest(".cell-wrapper");
+                if (!wrapper) {
+                    return;
+                }
+                const runButton = wrapper.querySelector(".compute .sagecell_evalButton");
+                if (runButton) {
+                    runButton.click();
+                    setStatus("Running cell...");
+                } else {
+                    setStatus("Run button is not ready yet. Please wait for SageCell to finish loading.");
+                }
+                setTimeout(() => {
+                    hideSageCellFooters();
+                    hideFullscreenButtons();
+                }, 1000);
+            }
             function toggleMarkdownPreview(event) {
                 const wrapper = event.target.closest(".cell-wrapper");
                 if (!wrapper) {
@@ -910,6 +937,9 @@
                     }
                     if (button.dataset.action === "insert-markdown-above") {
                         insertCellAbove(event, "markdown");
+                    }
+                    if (button.dataset.action === "run-cell") {
+                        runCell(event);
                     }
                     if (button.dataset.action === "delete-cell") {
                         deleteCell(event);
