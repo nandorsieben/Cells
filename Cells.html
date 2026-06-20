@@ -311,6 +311,16 @@
             let rebuildNumber = 0;
             let cleanupObserver = null;
             const LINK_KEY = "notebook-session";
+            const FILENAME_KEY = "sage-notebook-file-name";
+            let currentNotebookFileName = localStorage.getItem(FILENAME_KEY) || "sage_notebook.json";
+
+            function rememberNotebookFileName(name) {
+                if (!name) {
+                    return;
+                }
+                currentNotebookFileName = name.toLowerCase().endsWith(".json") ? name : name + ".json";
+                localStorage.setItem(FILENAME_KEY, currentNotebookFileName);
+            }
 
             function setStatus(message) {
                 const status = document.getElementById("status");
@@ -870,16 +880,17 @@
                 if (window.showSaveFilePicker) {
                     try {
                         const handle = await window.showSaveFilePicker({
-                            suggestedName: "sage_notebook.json",
+                            suggestedName: currentNotebookFileName,
                             types: [{
                                 description: "JSON notebook",
                                 accept: { "application/json": [".json"] }
                             }]
                         });
+                        rememberNotebookFileName(handle.name);
                         const writable = await handle.createWritable();
                         await writable.write(json);
                         await writable.close();
-                        setStatus("Saved sage_notebook.json.");
+                        setStatus("Saved " + currentNotebookFileName + ".");
                         return;
                     } catch (error) {
                         setStatus("Save cancelled.");
@@ -891,12 +902,12 @@
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement("a");
                 link.href = url;
-                link.download = "sage_notebook.json";
+                link.download = currentNotebookFileName;
                 document.body.appendChild(link);
                 link.click();
                 link.remove();
                 URL.revokeObjectURL(url);
-                setStatus("Downloaded sage_notebook.json.");
+                setStatus("Downloaded " + currentNotebookFileName + ".");
             }
 
             function loadCellsFromFile(event) {
@@ -907,6 +918,7 @@
                     return;
                 }
 
+                rememberNotebookFileName(file.name);
                 const reader = new FileReader();
                 reader.onload = loadEvent => {
                     try {
