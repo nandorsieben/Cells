@@ -21,6 +21,6 @@
   },
   {
     "type": "code",
-    "content": "%%gap\n\nG:=DihedralGroup(IsPermGroup,6);\nElements(G)"
+    "content": "%%gap\n\nG:=DihedralGroup(IsPermGroup,6);\nElements(G);"
   }
 ]
