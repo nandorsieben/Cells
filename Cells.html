@@ -220,6 +220,14 @@
 
                 .cell-wrapper {
                     margin-bottom: .45rem;
+                }
+
+                .cell-wrapper[data-type="code"] {
+                    break-inside: auto;
+                    page-break-inside: auto;
+                }
+
+                .cell-wrapper[data-type="markdown"] {
                     break-inside: avoid;
                     page-break-inside: avoid;
                 }
@@ -303,10 +311,125 @@
                 textarea {
                     border: none;
                 }
+
+                .sagecell .CodeMirror {
+                    height: auto !important;
+                    max-height: none !important;
+                    overflow: visible !important;
+                }
+
+                .sagecell {
+                    max-width: 100% !important;
+                    background: none !important;
+                    border: none !important;
+                    box-shadow: none !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                }
+
+                #cells .compute,
+                #cells .compute .sagecell {
+                    overflow: visible !important;
+                    height: auto !important;
+                }
+
+                .sagecell .CodeMirror,
+                .sagecell .CodeMirror-scroll {
+                    background: transparent !important;
+                    border: none !important;
+                    box-shadow: none !important;
+                }
+
+                [data-pdf-snapshot="true"] {
+                    max-width: 100% !important;
+                }
+
+                .sagecell .CodeMirror-scroll {
+                    min-height: 0 !important;
+                    height: auto !important;
+                    overflow: visible !important;
+                    padding-bottom: 0 !important;
+                    margin-bottom: 0 !important;
+                }
+
+                .sagecell .CodeMirror-sizer {
+                    min-height: 0 !important;
+                }
+
+                .sagecell .CodeMirror-lines {
+                    padding: 3px 0 !important;
+                }
+
+                .sagecell_output,
+                .sagecell_stdout,
+                .sagecell_stderr {
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    border: none !important;
+                    background: none !important;
+                    box-shadow: none !important;
+                }
+
+                .compute {
+                    margin-bottom: .2rem !important;
+                }
             }
         </style>
         <script>
             "use strict";
+
+            function patchWebGLPrototype(proto) {
+                const orig = proto.getContext;
+                proto.getContext = function(type, ...args) {
+                    if (type === "webgl" || type === "webgl2" || type === "experimental-webgl") {
+                        const attribs = args[0] || {};
+                        attribs.preserveDrawingBuffer = true;
+                        args[0] = attribs;
+                    }
+                    const ctx = orig.call(this, type, ...args);
+                    if (ctx && (type === "webgl" || type === "webgl2" || type === "experimental-webgl")) {
+                        this.__webglContext = ctx;
+                    }
+                    return ctx;
+                };
+            }
+
+            patchWebGLPrototype(HTMLCanvasElement.prototype);
+
+            (function() {
+                function tryPatchIframe(iframe) {
+                    try {
+                        const win = iframe.contentWindow;
+                        if (win && win.HTMLCanvasElement) {
+                            patchWebGLPrototype(win.HTMLCanvasElement.prototype);
+                        }
+                    } catch(e) {}
+                }
+
+                const observer = new MutationObserver(mutations => {
+                    for (const mutation of mutations) {
+                        for (const node of mutation.addedNodes) {
+                            if (node.tagName === "IFRAME") {
+                                tryPatchIframe(node);
+                                node.addEventListener("load", () => tryPatchIframe(node));
+                            }
+                        }
+                    }
+                });
+
+                if (document.body) {
+                    observer.observe(document.body, { childList: true, subtree: true });
+                } else {
+                    document.addEventListener("DOMContentLoaded", () => {
+                        observer.observe(document.body, { childList: true, subtree: true });
+                    });
+                }
+
+                document.querySelectorAll("iframe").forEach(iframe => {
+                    tryPatchIframe(iframe);
+                    iframe.addEventListener("load", () => tryPatchIframe(iframe));
+                });
+            })();
 
             let rebuildNumber = 0;
             let cleanupObserver = null;
@@ -314,12 +437,18 @@
             const FILENAME_KEY = "sage-notebook-file-name";
             let currentNotebookFileName = localStorage.getItem(FILENAME_KEY) || "sage_notebook.json";
 
+            function updateDocumentTitle() {
+                const stem = currentNotebookFileName.replace(/\.json$/i, "");
+                document.title = stem;
+            }
+
             function rememberNotebookFileName(name) {
                 if (!name) {
                     return;
                 }
                 currentNotebookFileName = name.toLowerCase().endsWith(".json") ? name : name + ".json";
                 localStorage.setItem(FILENAME_KEY, currentNotebookFileName);
+                updateDocumentTitle();
             }
 
             function setStatus(message) {
@@ -859,6 +988,208 @@
                 }
             }
 
+            function captureCanvasDataUrl(canvas) {
+                let ctx = canvas.__webglContext;
+                if (!ctx) {
+                    try { ctx = canvas.getContext('webgl') || canvas.getContext('webgl2'); } catch(e) {}
+                }
+                if (ctx) {
+                    try {
+                        const w = canvas.width;
+                        const h = canvas.height;
+                        if (w > 0 && h > 0) {
+                            const pixels = new Uint8Array(w * h * 4);
+                            ctx.readPixels(0, 0, w, h, ctx.RGBA, ctx.UNSIGNED_BYTE, pixels);
+                            const temp = document.createElement("canvas");
+                            temp.width = w;
+                            temp.height = h;
+                            const tctx = temp.getContext("2d");
+                            tctx.fillStyle = "white";
+                            tctx.fillRect(0, 0, w, h);
+                            const imageData = tctx.createImageData(w, h);
+                            for (let y = 0; y < h; y++) {
+                                for (let x = 0; x < w; x++) {
+                                    const si = (y * w + x) * 4;
+                                    const di = ((h - 1 - y) * w + x) * 4;
+                                    imageData.data[di] = pixels[si];
+                                    imageData.data[di + 1] = pixels[si + 1];
+                                    imageData.data[di + 2] = pixels[si + 2];
+                                    imageData.data[di + 3] = 255;
+                                }
+                            }
+                            tctx.putImageData(imageData, 0, 0);
+                            const url = temp.toDataURL("image/png");
+                            if (url && url.length > 100) return url;
+                        }
+                    } catch(e) {}
+                    return null;
+                }
+
+                try {
+                    const url = canvas.toDataURL("image/png");
+                    if (url && url.length > 100 && url !== "data:,") return url;
+                } catch(e) {}
+                return null;
+            }
+
+            function makePlaceholderImg(width, height) {
+                const c = document.createElement("canvas");
+                c.width = Math.max(width, 200);
+                c.height = Math.max(height, 50);
+                const ctx = c.getContext("2d");
+                ctx.fillStyle = "#f0f0f0";
+                ctx.fillRect(0, 0, c.width, c.height);
+                ctx.strokeStyle = "#999";
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(3, 3, c.width - 6, c.height - 6);
+                ctx.fillStyle = "#666";
+                ctx.font = "14px sans-serif";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText("3D Plot (interactive viewer not available in PDF)", c.width / 2, c.height / 2);
+                return c.toDataURL("image/png");
+            }
+
+            function extractPlotCall(code) {
+                const start = code.indexOf("implicit_plot3d(");
+                if (start < 0) return null;
+                let depth = 1;
+                let i = start + "implicit_plot3d(".length;
+                while (i < code.length && depth > 0) {
+                    if (code[i] === '(') depth++;
+                    else if (code[i] === ')') depth--;
+                    i++;
+                }
+                return code.substring(start, i);
+            }
+
+            function getBase64PlotForCode(originalCode) {
+                return new Promise(resolve => {
+                    const call = extractPlotCall(originalCode);
+                    if (!call) { resolve(null); return; }
+
+                    const container = document.createElement("div");
+                    container.style.cssText = "position:absolute;left:-9999px;top:0;width:1px;height:1px;overflow:hidden";
+                    document.body.appendChild(container);
+
+                    const compute = document.createElement("div");
+                    compute.className = "compute";
+                    const script = document.createElement("script");
+                    script.type = "text/x-sage";
+                    script.textContent = [
+                        "import base64, tempfile, os",
+                        "__p = " + call,
+                        '__f = tempfile.NamedTemporaryFile(suffix=".png", delete=False)',
+                        "__p.save(__f.name)",
+                        "__f.close()",
+                        "with open(__f.name, 'rb') as __fh:",
+                        "    print('PLOT_DATA:' + base64.b64encode(__fh.read()).decode())",
+                        "os.unlink(__f.name)",
+                        "del __p, __f, __fh"
+                    ].join("\n");
+                    compute.appendChild(script);
+                    container.appendChild(compute);
+
+                    const tempClass = "temp-plot-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7);
+                    compute.classList.add(tempClass);
+                    sagecell.makeSagecell({
+                        inputLocation: "." + tempClass,
+                        linked: true,
+                        linkKey: LINK_KEY,
+                        evalButtonText: "Run",
+                        autoeval: false
+                    });
+
+                    setTimeout(() => {
+                        const btn = compute.querySelector(".sagecell_evalButton");
+                        if (btn) btn.click();
+
+                        let attempts = 0;
+                        const check = setInterval(() => {
+                            attempts++;
+                            const stdout = compute.querySelector(".sagecell_stdout");
+                            if (stdout && stdout.textContent) {
+                                const text = stdout.textContent;
+                                const idx = text.indexOf("PLOT_DATA:");
+                                if (idx >= 0) {
+                                    const b64 = text.substring(idx + 10).replace(/[\s\r\n]+/g, "").trim();
+                                    if (b64.length > 50) {
+                                        clearInterval(check);
+                                        if (document.body.contains(container)) document.body.removeChild(container);
+                                        resolve("data:image/png;base64," + b64);
+                                        return;
+                                    }
+                                }
+                            }
+                            if (attempts >= 75) {
+                                clearInterval(check);
+                                if (document.body.contains(container)) document.body.removeChild(container);
+                                resolve(null);
+                            }
+                        }, 200);
+                    }, 1500);
+                });
+            }
+
+            function snapshotCanvasesForPrint() {
+                const replaceCanvas = function(canvas) {
+                    if (canvas.width === 0 || canvas.height === 0) return;
+                    try {
+                        const dataUrl = captureCanvasDataUrl(canvas);
+                        if (!dataUrl) return;
+                        const img = document.createElement("img");
+                        img.src = dataUrl;
+                        img.dataset.pdfSnapshot = "true";
+                        img.style.display = "block";
+                        img.style.maxWidth = "100%";
+                        img.style.height = "auto";
+
+                        canvas.parentNode.insertBefore(img, canvas);
+                        canvas.dataset.pdfHidden = "true";
+                        canvas.style.display = "none";
+                    } catch(e) {}
+                };
+
+                document.querySelectorAll("#cells .compute canvas").forEach(replaceCanvas);
+
+                document.querySelectorAll("#cells .compute iframe").forEach(iframe => {
+                    let captured = false;
+                    try {
+                        const doc = iframe.contentDocument || iframe.contentWindow.document;
+                        doc.querySelectorAll("canvas").forEach(replaceCanvas);
+                        captured = true;
+                    } catch(e) {}
+                    if (!captured) {
+                        const w = iframe.offsetWidth || 500;
+                        const h = iframe.offsetHeight || 300;
+                        let dataUrl;
+                        if (iframe.dataset.plotDataUrl) {
+                            dataUrl = iframe.dataset.plotDataUrl;
+                        } else {
+                            dataUrl = makePlaceholderImg(w, h);
+                        }
+                        const img = document.createElement("img");
+                        img.src = dataUrl;
+                        img.dataset.pdfSnapshot = "true";
+                        img.style.cssText = "display:block;width:100%;height:355px;object-fit:cover;";
+                        iframe.parentNode.insertBefore(img, iframe);
+                        iframe.dataset.pdfHidden = "true";
+                        iframe.style.display = "none";
+                    }
+                });
+            }
+
+            function restoreCanvasesAfterPrint() {
+                document.querySelectorAll('[data-pdf-snapshot="true"]').forEach(img => img.remove());
+                document.querySelectorAll('[data-pdf-hidden]').forEach(c => c.style.display = "");
+                document.querySelectorAll('[data-pdf-code="true"]').forEach(pre => pre.remove());
+                document.querySelectorAll("#cells .compute .CodeMirror").forEach(cm => {
+                    if (cm.style.display === "none") cm.style.display = "";
+                });
+            }
+
+            window.addEventListener("afterprint", restoreCanvasesAfterPrint);
+
             async function createPdf() {
                 setStatus("Typesetting Markdown math for PDF...");
                 await previewAllMarkdownCells();
@@ -869,9 +1200,71 @@
                     await document.fonts.ready.catch(() => {});
                 }
 
+                const plotPromises = [];
+                document.querySelectorAll("#cells .compute iframe").forEach(iframe => {
+                    try {
+                        const doc = iframe.contentDocument || iframe.contentWindow.document;
+                        doc; // if accessible, skip
+                    } catch(e) {
+                        const compute = iframe.closest(".compute");
+                        if (compute) {
+                            const code = getCodeFromCell(compute);
+                            if (code && code.includes("implicit_plot3d(")) {
+                                const promise = getBase64PlotForCode(code).then(url => {
+                                    if (url) { iframe.dataset.plotDataUrl = url; }
+                                });
+                                plotPromises.push(promise);
+                            }
+                        }
+                    }
+                });
+
+                if (plotPromises.length) {
+                    setStatus("Generating static PNG of 3D plot in kernel (" + plotPromises.length + " cell(s))...");
+                    await Promise.all(plotPromises);
+                }
+
                 await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-                setStatus("Preparing print.");
-                setTimeout(() => window.print(), 250);
+
+                const mainCanvases = document.querySelectorAll("#cells .compute canvas").length;
+                const iframes = document.querySelectorAll("#cells .compute iframe").length;
+                let iframeCanvases = 0;
+                document.querySelectorAll("#cells .compute iframe").forEach(iframe => {
+                    try {
+                        const doc = iframe.contentDocument || iframe.contentWindow.document;
+                        iframeCanvases += doc.querySelectorAll("canvas").length;
+                    } catch(e) {}
+                });
+
+                snapshotCanvasesForPrint();
+
+                const snapshotImgs = document.querySelectorAll('[data-pdf-snapshot="true"]').length;
+
+                document.querySelectorAll("#cells .compute .CodeMirror, #cells .compute .CodeMirror-scroll, #cells .compute .CodeMirror-sizer, #cells .compute .sagecell").forEach(el => {
+                    el.style.height = "";
+                    el.style.minHeight = "";
+                    el.style.maxHeight = "";
+                });
+
+                document.querySelectorAll("#cells .compute .CodeMirror").forEach(cm => {
+                    if (!cm.CodeMirror) return;
+                    const code = cm.CodeMirror.getValue();
+                    const lines = code.split('\n');
+                    const numbered = lines.map((line, i) => {
+                        const num = (i + 1).toString().padStart(Math.max(2, String(lines.length).length), ' ');
+                        return num + ': ' + line;
+                    }).join('\n');
+                    const pre = document.createElement("pre");
+                    pre.textContent = numbered;
+                    pre.dataset.pdfCode = "true";
+                    pre.style.cssText = "margin:0;padding:3px 4px;font-family:monospace;font-size:9pt;line-height:1;white-space:pre-wrap;word-wrap:break-word;color:#000;background:#fff;border:none;";
+                    cm.parentNode.insertBefore(pre, cm);
+                    cm.style.display = "none";
+                });
+
+                await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+                setStatus("Canvases: " + mainCanvases + " main, " + iframeCanvases + " in "+iframes+" iframe(s). Snapshots: " + snapshotImgs + ". Preparing print.");
+                setTimeout(() => window.print(), 500);
             }
 
             async function saveCells() {
@@ -961,6 +1354,7 @@
                     }
                 });
 
+                updateDocumentTitle();
                 rebuildCells(getAllCellsData(), "Ready.");
             });
         </script>
