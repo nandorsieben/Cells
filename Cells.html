@@ -1051,16 +1051,21 @@
             }
 
             function extractPlotCall(code) {
-                const start = code.indexOf("implicit_plot3d(");
-                if (start < 0) return null;
-                let depth = 1;
-                let i = start + "implicit_plot3d(".length;
-                while (i < code.length && depth > 0) {
-                    if (code[i] === '(') depth++;
-                    else if (code[i] === ')') depth--;
-                    i++;
+                const funcs = ["implicit_plot3d(", "plot3d("];
+                for (const f of funcs) {
+                    const start = code.indexOf(f);
+                    if (start >= 0) {
+                        let depth = 1;
+                        let i = start + f.length;
+                        while (i < code.length && depth > 0) {
+                            if (code[i] === '(') depth++;
+                            else if (code[i] === ')') depth--;
+                            i++;
+                        }
+                        return code.substring(start, i);
+                    }
                 }
-                return code.substring(start, i);
+                return null;
             }
 
             function getBase64PlotForCode(originalCode) {
@@ -1209,7 +1214,7 @@
                         const compute = iframe.closest(".compute");
                         if (compute) {
                             const code = getCodeFromCell(compute);
-                            if (code && code.includes("implicit_plot3d(")) {
+                            if (code && (code.includes("implicit_plot3d(") || code.includes("plot3d("))) {
                                 const promise = getBase64PlotForCode(code).then(url => {
                                     if (url) { iframe.dataset.plotDataUrl = url; }
                                 });
