@@ -5,6 +5,8 @@ A very simple notebook for Sagemath and Markdown cells:
 
 Features:
 - add and delete cells
+- run separate cells
 - run all cells
-- create pdf
-- save/load notebook locally as a json file
+- save notebook to local json file
+- load notebook from local json file
+- export pdf
